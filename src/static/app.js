@@ -23,42 +23,76 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
-        // Create participants list HTML
-        let participantsHTML = '';
+        // Create participants section using DOM manipulation to prevent XSS
+        const participantsSection = document.createElement("div");
+        participantsSection.className = "participants-section";
+        
+        const participantsTitle = document.createElement("p");
+        const strongElement = document.createElement("strong");
+        strongElement.textContent = "Current Participants:";
+        participantsTitle.appendChild(strongElement);
+        participantsSection.appendChild(participantsTitle);
+        
         if (details.participants.length > 0) {
-          participantsHTML = `
-            <div class="participants-section">
-              <p><strong>Current Participants:</strong></p>
-              <ul class="participants-list">
-                ${details.participants.map(email => `
-                  <li>
-                    <span class="participant-email">${email}</span>
-                    <button class="delete-btn" data-activity="${name}" data-email="${email}" title="Remove participant">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      </svg>
-                    </button>
-                  </li>
-                `).join('')}
-              </ul>
-            </div>
-          `;
+          const participantsList = document.createElement("ul");
+          participantsList.className = "participants-list";
+          
+          details.participants.forEach(email => {
+            const listItem = document.createElement("li");
+            
+            const emailSpan = document.createElement("span");
+            emailSpan.className = "participant-email";
+            emailSpan.textContent = email; // Using textContent prevents XSS
+            
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-btn";
+            deleteBtn.setAttribute("data-activity", name);
+            deleteBtn.setAttribute("data-email", email);
+            deleteBtn.setAttribute("title", "Remove participant");
+            
+            deleteBtn.innerHTML = `
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            `;
+            
+            listItem.appendChild(emailSpan);
+            listItem.appendChild(deleteBtn);
+            participantsList.appendChild(listItem);
+          });
+          
+          participantsSection.appendChild(participantsList);
         } else {
-          participantsHTML = `
-            <div class="participants-section">
-              <p><strong>Current Participants:</strong></p>
-              <p class="no-participants">No participants yet. Be the first to sign up!</p>
-            </div>
-          `;
+          const noParticipantsMsg = document.createElement("p");
+          noParticipantsMsg.className = "no-participants";
+          noParticipantsMsg.textContent = "No participants yet. Be the first to sign up!";
+          participantsSection.appendChild(noParticipantsMsg);
         }
 
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-          ${participantsHTML}
-        `;
+        // Create activity card content using DOM manipulation to prevent XSS
+        const titleElement = document.createElement("h4");
+        titleElement.textContent = name; // Using textContent prevents XSS
+        
+        const descriptionElement = document.createElement("p");
+        descriptionElement.textContent = details.description;
+        
+        const scheduleElement = document.createElement("p");
+        const scheduleStrong = document.createElement("strong");
+        scheduleStrong.textContent = "Schedule:";
+        scheduleElement.appendChild(scheduleStrong);
+        scheduleElement.appendChild(document.createTextNode(" " + details.schedule));
+        
+        const availabilityElement = document.createElement("p");
+        const availabilityStrong = document.createElement("strong");
+        availabilityStrong.textContent = "Availability:";
+        availabilityElement.appendChild(availabilityStrong);
+        availabilityElement.appendChild(document.createTextNode(" " + spotsLeft + " spots left"));
+        
+        activityCard.appendChild(titleElement);
+        activityCard.appendChild(descriptionElement);
+        activityCard.appendChild(scheduleElement);
+        activityCard.appendChild(availabilityElement);
+        activityCard.appendChild(participantsSection);
 
         activitiesList.appendChild(activityCard);
 
